@@ -16,7 +16,7 @@ RIGHT = 2
 UP = 3
 
 MAPS = {
-    "4x4": ["SFFF", "FHFH", "FFFH", "HFFG"],
+    "4x4": ["SFBF", "FHFH", "FFFB", "HFFG"],
     "8x8": [
         "SFFFFFFF",
         "FFBFFFFF",
@@ -164,7 +164,7 @@ class FrozenLakeEnv(Env):
         self,
         render_mode: Optional[str] = None,
         desc=None,
-        map_name="8x8",
+        map_name="4x4",
         is_slippery=True,
     ):
         if desc is None and map_name is None:
