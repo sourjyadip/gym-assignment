@@ -73,7 +73,7 @@ def generate_random_map(size: int = 8, p: float = 0.8) -> List[str]:
     return ["".join(x) for x in board]
 
 
-class FrozenLakeEnv(Env):
+class FrozenLakeEnv1(Env):
     """
     Frozen lake involves crossing a frozen lake from Start(S) to Goal(G) without falling into any Holes(H)
     by walking over the Frozen(F) lake.
