@@ -164,7 +164,7 @@ class FrozenLakeEnv(Env):
         self,
         render_mode: Optional[str] = None,
         desc=None,
-        map_name="4x4",
+        map_name="8x8",
         is_slippery=True,
     ):
         if desc is None and map_name is None:
