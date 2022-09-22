@@ -16,7 +16,7 @@ RIGHT = 2
 UP = 3
 
 MAPS = {
-    "4x4": ["SFFF", "FHFH", "FFFH", "HFFG"],
+    "4x4": ["SFBF", "FHFH", "FFFB", "HFFG"],
     "8x8": [
         "SFFFFFFF",
         "FFBFFFFF",
@@ -73,7 +73,7 @@ def generate_random_map(size: int = 8, p: float = 0.8) -> List[str]:
     return ["".join(x) for x in board]
 
 
-class FrozenLakeEnv(Env):
+class FrozenLakeEnv1(Env):
     """
     Frozen lake involves crossing a frozen lake from Start(S) to Goal(G) without falling into any Holes(H)
     by walking over the Frozen(F) lake.
@@ -198,9 +198,14 @@ class FrozenLakeEnv(Env):
             return (row, col)
 
         def update_probability_matrix(row, col, action):
-            newrow, newcol = inc(row, col, action)
+            if(bytes(desc[row, col])==b'B'):
+              newrow, newcol = row, col
+            else:
+              newrow, newcol = inc(row, col, action)
+    
             newstate = to_s(newrow, newcol)
             newletter = desc[newrow, newcol]
+            
             terminated = bytes(newletter) in b"GH"
             reward = float(newletter == b"G")
             return newstate, reward, terminated

@@ -116,7 +116,7 @@ register(
 
 register(
     id="Barrier-4x4",
-    entry_point="gym.envs.toy_text.frozen_lake:FrozenLakeEnv1",
+    entry_point="gym.envs.toy_text.frozen_lake_barrier:FrozenLakeEnv1",
     kwargs={"map_name": "4x4"},
     max_episode_steps=200,
     reward_threshold=0.85,  # optimum = 0.91
@@ -124,7 +124,7 @@ register(
 
 register(
     id="Barrier-8x8",
-    entry_point="gym.envs.toy_text.frozen_lake:FrozenLakeEnv1",
+    entry_point="gym.envs.toy_text.frozen_lake_barrier:FrozenLakeEnv1",
     kwargs={"map_name": "8x8"},
     max_episode_steps=200,
     reward_threshold=0.85,  # optimum = 0.91
