@@ -8,7 +8,6 @@ import numpy as np
 from gym import Env, spaces, utils
 from gym.envs.toy_text.utils import categorical_sample
 from gym.error import DependencyNotInstalled
-from gym.utils.renderer import Renderer
 
 LEFT = 0
 DOWN = 1
@@ -19,13 +18,13 @@ MAPS = {
     "4x4": ["SFFF", "FHFH", "FFFH", "HFFG"],
     "8x8": [
         "SFFFFFFF",
-        "FFBFFFFF",
+        "FFFFFFFF",
         "FFFHFFFF",
         "FFFFFHFF",
         "FFFHFFFF",
-        "FHHFFBHF",
+        "FHHFFFHF",
         "FHFFHFHF",
-        "FBFHFFFG",
+        "FFFHFFFG",
     ],
 }
 
@@ -46,7 +45,7 @@ def is_valid(board: List[List[str]], max_size: int) -> bool:
                     continue
                 if board[r_new][c_new] == "G":
                     return True
-                if board[r_new][c_new] != "H" and board[r_new][c_new] != "B":
+                if board[r_new][c_new] != "H":
                     frontier.append((r_new, c_new))
     return False
 
@@ -66,7 +65,7 @@ def generate_random_map(size: int = 8, p: float = 0.8) -> List[str]:
 
     while not valid:
         p = min(1, p)
-        board = np.random.choice(["F", "H", "B"], (size, size), p=[p, 1 - p])
+        board = np.random.choice(["F", "H"], (size, size), p=[p, 1 - p])
         board[0][0] = "S"
         board[-1][-1] = "G"
         valid = is_valid(board, size)
@@ -131,14 +130,14 @@ class FrozenLakeEnv(Env):
             ]
 
         "8x8": [
-        "SFFFFFFF",
-        "FFBFFFFF",
-        "FFFHFFFF",
-        "FFFFFHFF",
-        "FFFHFFFF",
-        "FHHFFBHF",
-        "FHFFHFHF",
-        "FBFHFFFG",
+            "SFFFFFFF",
+            "FFFFFFFF",
+            "FFFHFFFF",
+            "FFFFFHFF",
+            "FFFHFFFF",
+            "FHHFFFHF",
+            "FHFFHFHF",
+            "FFFHFFFG",
         ]
 
     `is_slippery`: True/False. If True will move in intended direction with
@@ -156,7 +155,7 @@ class FrozenLakeEnv(Env):
     """
 
     metadata = {
-        "render_modes": ["human", "ansi", "rgb_array", "single_rgb_array"],
+        "render_modes": ["human", "ansi", "rgb_array"],
         "render_fps": 4,
     }
 
@@ -226,7 +225,6 @@ class FrozenLakeEnv(Env):
         self.action_space = spaces.Discrete(nA)
 
         self.render_mode = render_mode
-        self.renderer = Renderer(self.render_mode, self._render)
 
         # pygame utils
         self.window_size = (min(64 * ncol, 512), min(64 * nrow, 512))
@@ -237,7 +235,6 @@ class FrozenLakeEnv(Env):
         self.window_surface = None
         self.clock = None
         self.hole_img = None
-        self.barrier_img = None
         self.cracked_hole_img = None
         self.ice_img = None
         self.elf_images = None
@@ -250,7 +247,9 @@ class FrozenLakeEnv(Env):
         p, s, r, t = transitions[i]
         self.s = s
         self.lastaction = a
-        self.renderer.render_step()
+
+        if self.render_mode == "human":
+            self.render()
         return (int(s), r, t, False, {"prob": p})
 
     def reset(
@@ -263,20 +262,15 @@ class FrozenLakeEnv(Env):
         self.s = categorical_sample(self.initial_state_distrib, self.np_random)
         self.lastaction = None
 
-        self.renderer.reset()
-        self.renderer.render_step()
-
+        if self.render_mode == "human":
+            self.render()
         return int(self.s), {"prob": 1}
 
     def render(self):
-        return self.renderer.get_renders()
-
-    def _render(self, mode="human"):
-        assert mode in self.metadata["render_modes"]
-        if mode == "ansi":
+        if self.render_mode == "ansi":
             return self._render_text()
-        elif mode in {"human", "rgb_array", "single_rgb_array"}:
-            return self._render_gui(mode)
+        else:  # self.render_mode in {"human", "rgb_array"}:
+            return self._render_gui(self.render_mode)
 
     def _render_gui(self, mode):
         try:
@@ -293,7 +287,7 @@ class FrozenLakeEnv(Env):
                 pygame.display.init()
                 pygame.display.set_caption("Frozen Lake")
                 self.window_surface = pygame.display.set_mode(self.window_size)
-            elif mode in {"rgb_array", "single_rgb_array"}:
+            elif mode == "rgb_array":
                 self.window_surface = pygame.Surface(self.window_size)
 
         assert (
@@ -302,11 +296,6 @@ class FrozenLakeEnv(Env):
 
         if self.clock is None:
             self.clock = pygame.time.Clock()
-        if self.barrier_img is None:
-            file_name = path.join(path.dirname(__file__), "img/barrier.jpeg")
-            self.barrier_img = pygame.transform.scale(
-                pygame.image.load(file_name), self.cell_size
-            ) 
         if self.hole_img is None:
             file_name = path.join(path.dirname(__file__), "img/hole.png")
             self.hole_img = pygame.transform.scale(
@@ -354,13 +343,11 @@ class FrozenLakeEnv(Env):
                 self.window_surface.blit(self.ice_img, pos)
                 if desc[y][x] == b"H":
                     self.window_surface.blit(self.hole_img, pos)
-                elif desc[y][x] == b"B":
-                    self.window_surface.blit(self.barrier_img, pos)
                 elif desc[y][x] == b"G":
                     self.window_surface.blit(self.goal_img, pos)
                 elif desc[y][x] == b"S":
                     self.window_surface.blit(self.start_img, pos)
-                #add barrier graphic
+
                 pygame.draw.rect(self.window_surface, (180, 200, 230), rect, 1)
 
         # paint the elf
@@ -378,7 +365,7 @@ class FrozenLakeEnv(Env):
             pygame.event.pump()
             pygame.display.update()
             self.clock.tick(self.metadata["render_fps"])
-        elif mode in {"rgb_array", "single_rgb_array"}:
+        elif mode == "rgb_array":
             return np.transpose(
                 np.array(pygame.surfarray.pixels3d(self.window_surface)), axes=(1, 0, 2)
             )
